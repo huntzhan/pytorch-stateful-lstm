@@ -1,26 +1,32 @@
-# Config file for automatic testing at travis-ci.org
-
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.9
+    - g++-4.9
 language: python
 python:
-  - 3.6
-
-# Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -U tox-travis
-
-# Command to run tests, e.g. python setup.py test
-script: tox
-
-# Assuming you have installed the travis-ci CLI tool, after you
-# create the Github repo and add it to Travis, run the
-# following command to finish PyPI deployment setup:
-# $ travis encrypt --add deploy.password
+- 3.6
+install:
+- pip install -U pip
+- sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave
+  /usr/bin/g++ g++ /usr/bin/g++-4.9
+- pip install -U -r requirements_prod.txt --progress-bar off
+- pip install -U -r requirements_dev.txt --progress-bar off
+- python setup.py develop
+script:
+- py.test
+- pylint pytorch_stateful_lstm
+- yapf -d -r pytorch_stateful_lstm
+- mypy pytorch_stateful_lstm --strict --ignore-missing-imports
 deploy:
   provider: pypi
-  distributions: sdist bdist_wheel
+  distributions: sdist
   user: huntzhan
   password:
-    secure: PLEASE_REPLACE_ME
+    secure: DwoqJ6MumVJLWxxfdh0r7+1PwDR+a4ZwuBAAfpq1++XMz3xXTCN+Q3u7XFB1nrSpKNDbZ96tLzmuCnOBK/24y1my2MF3CG8m7SX830N8uM6dVJaFQHT5koLnc4tYG+6CnQS97CX8LJ+WFy7WkUcWgYfWU8wZZxFjhMIQuQiQQoJQROrBItzIgG7VJyLmPoTNO7mBamAQeu+45CLdkIH4VQvbPN7653in11Ij58Py0jmApNQUKcoOzaKQ5MJMtmzJ/+AeNf9VoblFSu6Fck7HhOY+KdAIbva5H05yz490+qyg3ChLVzMvfrCh3naun3ZyDUZLUGWxTGArGPvuOUcvoIJNiZXJKhtORGjeemBSxmjNIFE+PYW2PaU8BPT92Zcgvjff+uTEvhz32WiUHev+Qied1kYZJGmo1/mPM2MUzV2E+qoaenUrx7TzPFunZHGCqt+2R6MGycP3HiyLt5795qNKZ2gBw8aqHVgQeRWA+45HrA85MJUvMVS9iNvYcGjjOVDOzMYigwIAQoV7+CCp2Fsz59V1UjXWqlO9E4vp4HrexB6kHuHifi2girhkbOMwhzXxYfyqKDoWB3bODcs0JquB/4zDj+FKKwiPRcwMTEUiAC4xUa4DE80X66SDk+CTOuaxkKzqxSrLDnZrgNGgllW2SrDxy6l1oLZmYscM/CA=
   on:
     tags: true
-    repo: huntzhan/pytorch_stateful_lstm
+    repo: cnt-dev/pytorch-stateful-lstm
     python: 3.6

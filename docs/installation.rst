@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/huntzhan/pytorch_stateful_lstm
+    $ git clone git://github.com/cnt-dev/pytorch-stateful-lstm
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/huntzhan/pytorch_stateful_lstm/tarball/master
+    $ curl  -OL https://github.com/cnt-dev/pytorch-stateful-lstm/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/huntzhan/pytorch_stateful_lstm
-.. _tarball: https://github.com/huntzhan/pytorch_stateful_lstm/tarball/master
+.. _Github repo: https://github.com/cnt-dev/pytorch-stateful-lstm
+.. _tarball: https://github.com/cnt-dev/pytorch-stateful-lstm/tarball/master
