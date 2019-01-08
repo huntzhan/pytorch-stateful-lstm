@@ -87,4 +87,9 @@ LstmForwardRetType StatefulUnidirectionalLstm::forward(
   return lstm_out;
 }
 
+void StatefulUnidirectionalLstm::reset_states() {
+  managed_hidden_state_.reset();
+  managed_cell_state_.reset();
+}
+
 }  // namespace cnt

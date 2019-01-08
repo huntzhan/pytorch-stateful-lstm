@@ -46,7 +46,7 @@ Example::
             cell_size=7,
     )
 
-    output_sequence, lstm_state = lstm.forward(
+    output_sequence, lstm_state = lstm(
             input_tensor,
             [5, 4, 2, 1],
     )

@@ -342,9 +342,9 @@ LstmForwardRetType UnidirectionalLstm::forward(
   auto layers_hidden_state = std::get<0>(initial_state);
   auto layers_cell_state = std::get<1>(initial_state);
 
-  std::vector<torch::Tensor> output_accumulators = {};
-  std::vector<torch::Tensor> hidden_states = {};
-  std::vector<torch::Tensor> cell_states = {};
+  std::vector<torch::Tensor> output_accumulators(num_layers_);
+  std::vector<torch::Tensor> hidden_states(num_layers_);
+  std::vector<torch::Tensor> cell_states(num_layers_);
 
   auto layer_inputs = inputs;
   for (int64_t layer_idx = 0; layer_idx < num_layers_; layer_idx++) {
@@ -365,9 +365,9 @@ LstmForwardRetType UnidirectionalLstm::forward(
     auto hidden_state = std::get<0>(final_state);
     auto cell_state = std::get<1>(final_state);
 
-    output_accumulators.push_back(output_accumulator.unsqueeze(0));
-    hidden_states.push_back(hidden_state);
-    cell_states.push_back(cell_state);
+    output_accumulators[layer_idx] = output_accumulator.unsqueeze(0);
+    hidden_states[layer_idx] = hidden_state;
+    cell_states[layer_idx] = cell_state;
 
     layer_inputs = output_accumulator;
   }

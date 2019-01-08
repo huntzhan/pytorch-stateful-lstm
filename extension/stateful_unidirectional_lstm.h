@@ -26,6 +26,9 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
       torch::Tensor inputs,
       const std::vector<int> &batch_lengths);
 
+  // Reset hidden/cell state.
+  void reset_states();
+
   // For building the initial state.
   int64_t num_layers_ = -1;
   int64_t hidden_size_ = -1;

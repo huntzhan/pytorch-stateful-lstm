@@ -22,7 +22,7 @@ def test_unidirectional_single_layer_lstm():
             cell_clip=2,
             proj_clip=1,
     )
-    output_sequence, lstm_state = lstm.forward(
+    output_sequence, lstm_state = lstm(
             input_tensor,
             [5, 4, 2, 1],
             (initial_hidden_state, initial_cell_state),
@@ -58,7 +58,7 @@ def test_unidirectional_single_layer_lstm_initial_state():
             cell_clip=2,
             proj_clip=1,
     )
-    output_sequence, lstm_state = lstm.forward(
+    output_sequence, lstm_state = lstm(
             input_tensor,
             [5, 4, 2, 1],
             (initial_hidden_state, initial_cell_state),
@@ -76,7 +76,7 @@ def test_unidirectional_single_layer_lstm_initial_state():
     initial_hidden_state = torch.ones([1, 2, 5])
     initial_cell_state = torch.ones([1, 2, 7])
     with pytest.raises(ValueError):
-        lstm.forward(
+        lstm(
                 input_tensor,
                 [5, 4, 2, 1],
                 (initial_hidden_state, initial_cell_state),
@@ -120,7 +120,7 @@ def test_unidirectional_single_layer_lstm_with_allennlp():
         lstm.named_parameters()['proj_linearity_weight'].data.copy_(
                 allennlp_lstm.state_projection.weight,)
 
-        output_sequence, lstm_state = lstm.forward(
+        output_sequence, lstm_state = lstm(
                 input_tensor,
                 [5, 4, 2, 1],
                 (initial_hidden_state, initial_cell_state),
@@ -153,11 +153,11 @@ def test_unidirectional_single_layer_lstm_variational_dropout():
             recurrent_dropout_probability=0.1,
     )
 
-    output_sequence_1, lstm_state_1 = lstm.forward(
+    output_sequence_1, lstm_state_1 = lstm(
             input_tensor,
             [5, 4, 2, 1],
     )
-    output_sequence_2, lstm_state_2 = lstm.forward(
+    output_sequence_2, lstm_state_2 = lstm(
             input_tensor,
             [5, 4, 2, 1],
     )
@@ -196,11 +196,11 @@ def test_unidirectional_single_layer_lstm_dropconnect():
             recurrent_dropout_probability=0.1,
     )
 
-    output_sequence_1, lstm_state_1 = lstm.forward(
+    output_sequence_1, lstm_state_1 = lstm(
             input_tensor,
             [5, 4, 2, 1],
     )
-    output_sequence_2, lstm_state_2 = lstm.forward(
+    output_sequence_2, lstm_state_2 = lstm(
             input_tensor,
             [5, 4, 2, 1],
     )
@@ -240,7 +240,7 @@ def test_unidirectional_lstm():
             hidden_size=5,
             cell_size=7,
     )
-    output_sequence, lstm_state = lstm.forward(
+    output_sequence, lstm_state = lstm(
             input_tensor,
             [5, 4, 2, 1],
             (initial_hidden_state, initial_cell_state),
