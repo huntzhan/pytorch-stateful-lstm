@@ -3,7 +3,7 @@
 
 __author__ = """Hunt Zhan"""
 __email__ = 'huntzhan.dev@gmail.com'
-__version__ = '1.0.3'
+__version__ = '1.1.0'
 
 # pylint: disable=no-name-in-module
 from _pytorch_stateful_lstm import (

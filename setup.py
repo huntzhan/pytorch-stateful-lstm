@@ -49,7 +49,7 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/cnt-dev/pytorch-stateful-lstm',
-    version='1.0.3',
+    version='1.1.0',
     zip_safe=False,
     # Pytorch Cpp Extension.
     ext_modules=[
