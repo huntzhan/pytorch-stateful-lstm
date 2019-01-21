@@ -137,21 +137,22 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
 
   int64_t total_sequences_size = inputs.size(0);
   int64_t total_timesteps = batch_sizes_accessor.size(0);
-  auto options = torch::dtype(inputs.dtype()).device(inputs.device());
 
   // Unpack hidden/cell state.
-  auto hidden_state = std::get<0>(initial_state).squeeze(0);
-  auto cell_state = std::get<1>(initial_state).squeeze(0);
+  auto initial_hidden_state = std::get<0>(initial_state).squeeze(0);
+  auto initial_cell_state = std::get<1>(initial_state).squeeze(0);
   // `batch_sizes_accessor[0]`: the batch size.
-  if (hidden_state.size(0) < batch_sizes_accessor[0]
-      || cell_state.size(0) < batch_sizes_accessor[0]) {
+  if (initial_hidden_state.size(0) < batch_sizes_accessor[0]
+      || initial_cell_state.size(0) < batch_sizes_accessor[0]) {
     throw std::invalid_argument(
         "initial_state can't fullfill inputs.");
   }
 
-  // Initialize the output.
-  auto output_accumulator = torch::zeros(
-      {total_sequences_size, hidden_size_}, options);
+  // Initialize the output container.
+  std::vector<torch::Tensor> output_accumulator(total_timesteps);
+  // Keep the chunks of hidden/cell in forward mode.
+  std::vector<torch::Tensor> forward_hiddens;
+  std::vector<torch::Tensor> forward_cells;
 
   // Create aliases for dropout.
   auto batch_input_linearity_weight = input_linearity_weight_;
@@ -166,7 +167,7 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
     }
     variational_dropout_mask = get_dropout_mask(
         recurrent_dropout_probability_,
-        hidden_state);
+        initial_hidden_state);
   }
 
   // Dropconnect mask on input/hidden linear projection weights.
@@ -192,6 +193,14 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
         hidden_linearity_weight_ * dropconnect_hidden_mask;
   }
 
+  // Temporal hidden/cell.
+  int64_t init_batch_size =
+      go_forward_ ?
+      batch_sizes_accessor[0] :
+      batch_sizes_accessor[total_timesteps - 1];
+  auto hidden_state = initial_hidden_state.narrow(0, 0, init_batch_size);
+  auto cell_state = initial_cell_state.narrow(0, 0, init_batch_size);
+
   // Loop over each timestep and unpack inputs manually.
   int64_t total_offset = 0;
   for (int64_t ts_offset = 0; ts_offset < total_timesteps; ts_offset++) {
@@ -209,9 +218,48 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
       cell_state = cell_state.detach();
     }
 
-    // Slicing hidden/cell/inputs.
-    auto cur_hidden = hidden_state.narrow(0, 0, batch_size);
-    auto cur_cell = cell_state.narrow(0, 0, batch_size);
+    // Slicing hidden/cell.
+    if (go_forward_) {
+      if (timestep_index > 0) {
+        // Trim off if necessary.
+        auto last_batch_size = batch_sizes_accessor[timestep_index - 1];
+        auto dec = last_batch_size - batch_size;
+        if (dec > 0) {
+          forward_hiddens.push_back(
+              hidden_state.narrow(
+                  0,
+                  last_batch_size - dec,
+                  dec));
+          forward_cells.push_back(
+              cell_state.narrow(
+                  0,
+                  last_batch_size - dec,
+                  dec));
+          // Narrows state.
+          hidden_state = hidden_state.narrow(0, 0, batch_size);
+          cell_state = cell_state.narrow(0, 0, batch_size);
+        }
+      }
+    } else {
+      if (timestep_index < total_timesteps - 1) {
+        auto last_batch_size = batch_sizes_accessor[timestep_index + 1];
+        auto inc = batch_size - last_batch_size;
+        if (inc > 0) {
+          hidden_state = torch::cat(
+              {
+                  hidden_state,
+                  initial_hidden_state.narrow(0, batch_size - inc, inc),
+              },
+              0);
+          cell_state = torch::cat(
+              {
+                  cell_state,
+                  initial_cell_state.narrow(0, batch_size - inc, inc),
+              },
+              0);
+        }
+      }
+    }
 
     // Slicing inputs.
     int64_t input_slice_begin = -1;
@@ -226,7 +274,7 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
     auto proj_input = torch::linear(
         cur_input, batch_input_linearity_weight);
     auto proj_hidden = torch::linear(
-        cur_hidden, batch_hidden_linearity_weight, hidden_linearity_bias_);
+        hidden_state, batch_hidden_linearity_weight, hidden_linearity_bias_);
 
     auto input_gate = torch::sigmoid(
         proj_input.narrow(1, 0 * cell_size_, cell_size_) +
@@ -241,45 +289,59 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
         proj_input.narrow(1, 3 * cell_size_, cell_size_) +
         proj_hidden.narrow(1, 3 * cell_size_, cell_size_));
 
-    auto next_cell = input_gate * cell_tilde + forget_gate * cur_cell;
+    cell_state = input_gate * cell_tilde + forget_gate * cell_state;
     if (cell_clip_ > 0.0) {
-      next_cell.clamp_(-cell_clip_, cell_clip_);
+      cell_state.clamp_(-cell_clip_, cell_clip_);
     }
 
-    auto next_hidden = torch::linear(
-        output_gate * torch::tanh(next_cell),
+    hidden_state = torch::linear(
+        output_gate * torch::tanh(cell_state),
         proj_linearity_weight_);
     if (proj_clip_ > 0.0) {
-      next_hidden.clamp_(-proj_clip_, proj_clip_);
+      hidden_state.clamp_(-proj_clip_, proj_clip_);
     }
 
     // Apply variational dropout.
     if (is_training() && recurrent_dropout_type_ == 1) {
-      next_hidden *=
+      hidden_state *=
           variational_dropout_mask.narrow(0, 0, batch_size);
     }
 
-    // Required by gradients propagation.
-    hidden_state = hidden_state.clone();
-    cell_state = cell_state.clone();
-    // Update hidden/cell state.
-    hidden_state
-        .narrow(0, 0, batch_size)
-        .copy_(next_hidden);
-    cell_state
-        .narrow(0, 0, batch_size)
-        .copy_(next_cell);
     // Update offset.
     total_offset += batch_size;
 
     // Fill hidden state to output.
-    output_accumulator
-        .narrow(0, input_slice_begin, batch_size)
-        .copy_(next_hidden);
+    output_accumulator[timestep_index] = hidden_state;
+  }
+
+  if (go_forward_) {
+    forward_hiddens.push_back(hidden_state);
+    std::reverse(forward_hiddens.begin(), forward_hiddens.end());
+    hidden_state = torch::cat(forward_hiddens, 0);
+
+    forward_cells.push_back(cell_state);
+    std::reverse(forward_cells.begin(), forward_cells.end());
+    cell_state = torch::cat(forward_cells, 0);
+  }
+
+  auto state_dec = initial_hidden_state.size(0) - hidden_state.size(0);
+  if (state_dec > 0) {
+    hidden_state = torch::cat(
+        {
+            hidden_state,
+            initial_hidden_state.narrow(0, hidden_state.size(0), state_dec),
+        },
+        0);
+    cell_state = torch::cat(
+        {
+            cell_state,
+            initial_cell_state.narrow(0, cell_state.size(0), state_dec),
+        },
+        0);
   }
 
   return std::make_tuple(
-      output_accumulator,
+      torch::cat(output_accumulator, 0),
       std::make_tuple(
           hidden_state.unsqueeze(0),
           cell_state.unsqueeze(0)));

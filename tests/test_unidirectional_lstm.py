@@ -105,7 +105,7 @@ def test_unidirectional_single_layer_lstm_with_allennlp():
     initial_cell_state = torch.ones([1, 4, 7])
 
     for go_forward in [True, False]:
-
+        print(go_forward)
         allennlp_lstm = LstmCellWithProjection(
                 input_size=3,
                 hidden_size=5,
