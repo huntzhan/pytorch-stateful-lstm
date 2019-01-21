@@ -28,7 +28,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           (
               cnt::LstmForwardRetType
               (cnt::UnidirectionalSingleLayerLstm::*)
-              (torch::Tensor, const std::vector<int> &, cnt::LstmStateType)
+              (torch::Tensor, torch::Tensor, cnt::LstmStateType)
           )
               &cnt::UnidirectionalSingleLayerLstm::forward)
 
@@ -37,7 +37,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           (
               cnt::LstmForwardRetType
               (cnt::UnidirectionalSingleLayerLstm::*)
-              (torch::Tensor, const std::vector<int> &)
+              (torch::Tensor, torch::Tensor)
           )
               &cnt::UnidirectionalSingleLayerLstm::forward);
 
@@ -67,18 +67,18 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
       .def(
           "__call__",
           (
-              cnt::LstmForwardRetType
+              cnt::LstmForwardMultiLayerRetType
               (cnt::UnidirectionalLstm::*)
-              (torch::Tensor, const std::vector<int> &, cnt::LstmStateType)
+              (torch::Tensor, torch::Tensor, cnt::LstmStateType)
           )
               &cnt::UnidirectionalLstm::forward)
 
       .def(
           "__call__",
           (
-              cnt::LstmForwardRetType
+              cnt::LstmForwardMultiLayerRetType
               (cnt::UnidirectionalLstm::*)
-              (torch::Tensor, const std::vector<int> &)
+              (torch::Tensor, torch::Tensor)
           )
               &cnt::UnidirectionalLstm::forward);
 

@@ -20,11 +20,11 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
       int64_t recurrent_dropout_type,
       double recurrent_dropout_probability);
 
-  // Same as `UnidirectionalLstm.forward(inputs, batch_lengths)`,
+  // Same as `UnidirectionalLstm.forward(inputs, batch_sizes)`,
   // but with managed hidden/cell state.
-  LstmForwardRetType forward(
+  LstmForwardMultiLayerRetType forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths);
+      torch::Tensor batch_sizes);
 
   // Reset hidden/cell state.
   void reset_states();

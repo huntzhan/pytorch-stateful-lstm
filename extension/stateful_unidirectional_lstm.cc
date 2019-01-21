@@ -35,10 +35,11 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       uni_lstm_);
 }
 
-LstmForwardRetType StatefulUnidirectionalLstm::forward(
+LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths) {
-  int64_t batch_size = inputs.size(0);
+      torch::Tensor batch_sizes) {
+  auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
+  int64_t batch_size = batch_sizes_accessor[0];
   auto options = torch::dtype(inputs.dtype()).device(inputs.device());
 
   if (!(managed_hidden_state_.defined() && managed_cell_state_.defined())) {
@@ -73,7 +74,7 @@ LstmForwardRetType StatefulUnidirectionalLstm::forward(
 
   auto lstm_out = uni_lstm_->forward(
       inputs,
-      batch_lengths,
+      batch_sizes,
       std::make_tuple(managed_hidden_state_, managed_cell_state_));
 
   // Update & detach manage state.

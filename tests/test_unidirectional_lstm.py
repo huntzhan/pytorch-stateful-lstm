@@ -1,4 +1,5 @@
 import torch
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, PackedSequence
 import numpy
 import pytest
 
@@ -12,6 +13,8 @@ def test_unidirectional_single_layer_lstm():
     input_tensor[2, 2:, :] = 0.
     input_tensor[3, 1:, :] = 0.
 
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+
     initial_hidden_state = torch.ones([1, 4, 5])
     initial_cell_state = torch.ones([1, 4, 7])
 
@@ -22,11 +25,16 @@ def test_unidirectional_single_layer_lstm():
             cell_clip=2,
             proj_clip=1,
     )
-    output_sequence, lstm_state = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+    outputs, lstm_state = lstm(
+            inputs.data,
+            inputs.batch_sizes,
             (initial_hidden_state, initial_cell_state),
     )
+    output_sequence, _batch_sizes = pad_packed_sequence(
+            PackedSequence(outputs, inputs.batch_sizes),
+            batch_first=True,
+    )
+
     numpy.testing.assert_array_equal(output_sequence.data[1, 4:, :].numpy(), 0.0)
     numpy.testing.assert_array_equal(output_sequence.data[2, 2:, :].numpy(), 0.0)
     numpy.testing.assert_array_equal(output_sequence.data[3, 1:, :].numpy(), 0.0)
@@ -51,6 +59,8 @@ def test_unidirectional_single_layer_lstm_initial_state():
     initial_hidden_state = torch.ones([1, 8, 5])
     initial_cell_state = torch.ones([1, 8, 7])
 
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+
     lstm = UnidirectionalSingleLayerLstm(
             input_size=3,
             hidden_size=5,
@@ -58,9 +68,9 @@ def test_unidirectional_single_layer_lstm_initial_state():
             cell_clip=2,
             proj_clip=1,
     )
-    output_sequence, lstm_state = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+    _, lstm_state = lstm(
+            inputs.data,
+            inputs.batch_sizes,
             (initial_hidden_state, initial_cell_state),
     )
 
@@ -77,8 +87,8 @@ def test_unidirectional_single_layer_lstm_initial_state():
     initial_cell_state = torch.ones([1, 2, 7])
     with pytest.raises(ValueError):
         lstm(
-                input_tensor,
-                [5, 4, 2, 1],
+                inputs.data,
+                inputs.batch_sizes,
                 (initial_hidden_state, initial_cell_state),
         )
 
@@ -88,6 +98,8 @@ def test_unidirectional_single_layer_lstm_with_allennlp():
     input_tensor[1, 4:, :] = 0.
     input_tensor[2, 2:, :] = 0.
     input_tensor[3, 1:, :] = 0.
+
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
 
     initial_hidden_state = torch.ones([1, 4, 5])
     initial_cell_state = torch.ones([1, 4, 7])
@@ -120,11 +132,16 @@ def test_unidirectional_single_layer_lstm_with_allennlp():
         lstm.named_parameters()['proj_linearity_weight'].data.copy_(
                 allennlp_lstm.state_projection.weight,)
 
-        output_sequence, lstm_state = lstm(
-                input_tensor,
-                [5, 4, 2, 1],
+        outputs, lstm_state = lstm(
+                inputs.data,
+                inputs.batch_sizes,
                 (initial_hidden_state, initial_cell_state),
         )
+        output_sequence, _batch_sizes = pad_packed_sequence(
+                PackedSequence(outputs, inputs.batch_sizes),
+                batch_first=True,
+        )
+
         allennlp_output_sequence, allennlp_lstm_state = allennlp_lstm(
                 input_tensor,
                 [5, 4, 2, 1],
@@ -145,6 +162,8 @@ def test_unidirectional_single_layer_lstm_variational_dropout():
     input_tensor[2, 2:, :] = 0.
     input_tensor[3, 1:, :] = 0.
 
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+
     lstm = UnidirectionalSingleLayerLstm(
             input_size=3,
             hidden_size=50,
@@ -154,12 +173,12 @@ def test_unidirectional_single_layer_lstm_variational_dropout():
     )
 
     output_sequence_1, lstm_state_1 = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+            inputs.data,
+            inputs.batch_sizes,
     )
     output_sequence_2, lstm_state_2 = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+            inputs.data,
+            inputs.batch_sizes,
     )
 
     numpy.testing.assert_raises(
@@ -188,6 +207,8 @@ def test_unidirectional_single_layer_lstm_dropconnect():
     input_tensor[2, 2:, :] = 0.
     input_tensor[3, 1:, :] = 0.
 
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+
     lstm = UnidirectionalSingleLayerLstm(
             input_size=3,
             hidden_size=50,
@@ -197,12 +218,12 @@ def test_unidirectional_single_layer_lstm_dropconnect():
     )
 
     output_sequence_1, lstm_state_1 = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+            inputs.data,
+            inputs.batch_sizes,
     )
     output_sequence_2, lstm_state_2 = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+            inputs.data,
+            inputs.batch_sizes,
     )
 
     numpy.testing.assert_raises(
@@ -231,6 +252,8 @@ def test_unidirectional_lstm():
     input_tensor[2, 2:, :] = 0.
     input_tensor[3, 1:, :] = 0.
 
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+
     initial_hidden_state = torch.ones([2, 4, 5])
     initial_cell_state = torch.ones([2, 4, 7])
 
@@ -240,19 +263,29 @@ def test_unidirectional_lstm():
             hidden_size=5,
             cell_size=7,
     )
-    output_sequence, lstm_state = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+    outputs, lstm_state = lstm(
+            inputs.data,
+            inputs.batch_sizes,
             (initial_hidden_state, initial_cell_state),
     )
+    output_sequence_0, _batch_sizes = pad_packed_sequence(
+            PackedSequence(outputs[0], inputs.batch_sizes),
+            batch_first=True,
+    )
+    output_sequence_1, _batch_sizes = pad_packed_sequence(
+            PackedSequence(outputs[1], inputs.batch_sizes),
+            batch_first=True,
+    )
 
-    assert list(output_sequence.size()) == [2, 4, 5, 5]
-    numpy.testing.assert_array_equal(output_sequence.data[0, 1, 4:, :].numpy(), 0.0)
-    numpy.testing.assert_array_equal(output_sequence.data[0, 2, 2:, :].numpy(), 0.0)
-    numpy.testing.assert_array_equal(output_sequence.data[0, 3, 1:, :].numpy(), 0.0)
-    numpy.testing.assert_array_equal(output_sequence.data[1, 1, 4:, :].numpy(), 0.0)
-    numpy.testing.assert_array_equal(output_sequence.data[1, 2, 2:, :].numpy(), 0.0)
-    numpy.testing.assert_array_equal(output_sequence.data[1, 3, 1:, :].numpy(), 0.0)
+    assert list(output_sequence_0.size()) == [4, 5, 5]
+    assert list(output_sequence_1.size()) == [4, 5, 5]
+
+    numpy.testing.assert_array_equal(output_sequence_0.data[1, 4:, :].numpy(), 0.0)
+    numpy.testing.assert_array_equal(output_sequence_0.data[2, 2:, :].numpy(), 0.0)
+    numpy.testing.assert_array_equal(output_sequence_0.data[3, 1:, :].numpy(), 0.0)
+    numpy.testing.assert_array_equal(output_sequence_1.data[1, 4:, :].numpy(), 0.0)
+    numpy.testing.assert_array_equal(output_sequence_1.data[2, 2:, :].numpy(), 0.0)
+    numpy.testing.assert_array_equal(output_sequence_1.data[3, 1:, :].numpy(), 0.0)
 
     # LSTM state should be (1, batch_size, hidden_size)
     assert list(lstm_state[0].size()) == [2, 4, 5]

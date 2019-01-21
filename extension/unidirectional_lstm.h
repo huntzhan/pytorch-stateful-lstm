@@ -10,6 +10,8 @@ namespace cnt {
 
 using LstmStateType = std::tuple<torch::Tensor, torch::Tensor>;
 using LstmForwardRetType = std::tuple<torch::Tensor, LstmStateType>;
+using LstmForwardMultiLayerRetType = std::tuple<
+    std::vector<torch::Tensor>, LstmStateType>;
 
 struct UnidirectionalSingleLayerLstm : torch::nn::Module {
   UnidirectionalSingleLayerLstm(
@@ -34,12 +36,11 @@ struct UnidirectionalSingleLayerLstm : torch::nn::Module {
       int64_t recurrent_dropout_type,
       double recurrent_dropout_probability);
 
-  // Inputs: inputs, batch_lengths, (h_0, c_0)
-  //   - **inputs** of shape `(batch, total_timesteps, input_size)`:
-  //     tensor containing inputs that must be sorted by the length
-  //     of sequence in descending order.
-  //   - **batch_lengths** of shape `(batch,)`:
-  //     list containing the lengths of the sequences in batch.
+  // Inputs: inputs, batch_sizes, (h_0, c_0)
+  //   - **inputs** of shape `(*, input_size)`:
+  //     tensor of `PackedSequence.data`.
+  //   - **batch_sizes** of shape `(total_timesteps,)`:
+  //     tensor of `PackedSequence.batch_sizes`.
   //   - **h_0** of shape `(1, {x | x >= batch}, hidden_size)`.
   //     tensor containing the intial hidden state of LSTM.
   //   - **c_0** of shape `(1, {x | x >= batch}, cell_size)`.
@@ -47,21 +48,22 @@ struct UnidirectionalSingleLayerLstm : torch::nn::Module {
   //
   // Outputs: output, (h_1, c_1)
   //   - **output** of shape
-  //     `(batch, total_timesteps, hidden_size)`:
-  //     tensor containing output features.
+  //     `(*, hidden_size)`:
+  //     tensor containing output features and should be used
+  //     to initialize `PackedSequence` along with `batch_sizes`.
   //   - **h_1** of shape `(1, {x | x >= batch}, hidden_size)`.
   //     tensor containing the final hidden state of LSTM.
   //   - **c_1** of shape `(1, {x | x >= batch}, cell_size)`.
   //     tensor containing the final cell state of LSTM.
   LstmForwardRetType forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths,
+      torch::Tensor batch_sizes,
       LstmStateType initial_state);
 
   // Equivalent to passing zero tensors as the initial states.
   LstmForwardRetType forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths);
+      torch::Tensor batch_sizes);
 
   int64_t input_size_ = -1;
   int64_t hidden_size_ = -1;
@@ -101,26 +103,25 @@ struct UnidirectionalLstm : torch::nn::Module {
   // Similar to `UnidirectionalSingleLayerLstm`, but with
   // the results of `num_layers` layers.
   //
-  // Inputs: inputs, batch_lengths, (h_0, c_0)
-  //   - **inputs** of shape `(batch, total_timesteps, input_size)`.
-  //   - **batch_lengths** of shape `(batch,)`.
+  // Inputs: inputs, batch_sizes, (h_0, c_0)
+  //   - **inputs** of shape `(*, input_size)`.
+  //   - **batch_sizes** of shape `(total_timesteps,)`.
   //   - **h_0** of shape `(num_layers, {x | x >= batch}, hidden_size)`.
   //   - **c_0** of shape `(num_layers, {x | x >= batch}, cell_size)`.
   //
-  // Outputs: output, (h_1, c_1)
-  //   - **output** of shape
-  //     `(num_layers, batch, total_timesteps, hidden_size)`.
+  // Outputs: outputs, (h_1, c_1)
+  //   - **outputs**, a list of shape `(*, hidden_size)`.
   //   - **h_1** of shape `(num_layers, {x | x >= batch}, hidden_size)`.
   //   - **c_1** of shape `(num_layers, {x | x >= batch}, cell_size)`.
-  LstmForwardRetType forward(
+  LstmForwardMultiLayerRetType forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths,
+      torch::Tensor batch_sizes,
       LstmStateType initial_state);
 
   // Equivalent to passing zero tensors as the initial states.
-  LstmForwardRetType forward(
+  LstmForwardMultiLayerRetType forward(
       torch::Tensor inputs,
-      const std::vector<int> &batch_lengths);
+      torch::Tensor batch_sizes);
 
   int64_t hidden_size_ = -1;
   int64_t cell_size_ = -1;
