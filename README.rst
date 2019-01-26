@@ -37,6 +37,8 @@ Usage
 
 Example::
 
+    import torch
+    from torch.nn.utils.rnn import pack_padded_sequence, PackedSequence
     from pytorch_stateful_lstm import StatefulUnidirectionalLstm
 
     lstm = StatefulUnidirectionalLstm(
@@ -46,10 +48,12 @@ Example::
             cell_size=7,
     )
 
-    output_sequence, lstm_state = lstm(
-            input_tensor,
-            [5, 4, 2, 1],
+    inputs = pack_padded_sequence(torch.rand(4, 5, 3), [5, 4, 2, 1], batch_first=True)
+    raw_packed_outputs, lstm_state = lstm(
+            inputs.data,
+            inputs.batch_sizes
     )
+    outputs = PackedSequence(raw_packed_outputs, inputs.batch_sizes)
 
 For the definition of parameters, see https://github.com/cnt-dev/pytorch-stateful-lstm/tree/master/extension.
 
