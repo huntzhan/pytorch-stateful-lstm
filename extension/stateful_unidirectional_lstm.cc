@@ -12,7 +12,8 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       double cell_clip,
       double proj_clip,
       int64_t recurrent_dropout_type,
-      double recurrent_dropout_probability)
+      double recurrent_dropout_probability,
+      bool use_skip_connections)
       :
       num_layers_(num_layers),
       hidden_size_(hidden_size),
@@ -28,7 +29,8 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       cell_clip,
       proj_clip,
       recurrent_dropout_type,
-      recurrent_dropout_probability);
+      recurrent_dropout_probability,
+      use_skip_connections);
   // Register.
   register_module(
       "uni_lstm",

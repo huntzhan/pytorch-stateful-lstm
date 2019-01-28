@@ -17,6 +17,7 @@ Features
 Pytorch LSTM implementation powered by Libtorch, and with the support of:
 
 - Hidden/Cell Clip.
+- Skip Connections.
 - Variational Dropout & DropConnect.
 - Managed Initial State.
 - Built-in TBPTT.

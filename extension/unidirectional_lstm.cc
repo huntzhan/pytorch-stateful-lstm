@@ -371,11 +371,13 @@ UnidirectionalLstm::UnidirectionalLstm(
     double cell_clip,
     double proj_clip,
     int64_t recurrent_dropout_type,
-    double recurrent_dropout_probability)
+    double recurrent_dropout_probability,
+    bool use_skip_connections)
     :
     hidden_size_(hidden_size),
     cell_size_(cell_size),
     num_layers_(num_layers),
+    use_skip_connections_(use_skip_connections),
     layer_name_prefix_(go_forward ? "forward_layer_" : "backward_layer_") {
   auto lstm_input_size = input_size;
 
@@ -435,6 +437,11 @@ LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
     output_accumulators[layer_idx] = output_accumulator;
     hidden_states[layer_idx] = hidden_state;
     cell_states[layer_idx] = cell_state;
+
+    if (layer_idx > 0 && use_skip_connections_) {
+      // input_size == hidden_size.
+      output_accumulator += layer_inputs;
+    }
 
     layer_inputs = output_accumulator;
   }

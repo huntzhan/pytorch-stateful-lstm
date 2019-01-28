@@ -262,6 +262,7 @@ def test_unidirectional_lstm():
             input_size=3,
             hidden_size=5,
             cell_size=7,
+            use_skip_connections=True,
     )
     outputs, lstm_state = lstm(
             inputs.data,

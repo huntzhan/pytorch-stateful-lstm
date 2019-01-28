@@ -18,7 +18,8 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
       double cell_clip,
       double proj_clip,
       int64_t recurrent_dropout_type,
-      double recurrent_dropout_probability);
+      double recurrent_dropout_probability,
+      bool use_skip_connections);
 
   // Same as `UnidirectionalLstm.forward(inputs, batch_sizes)`,
   // but with managed hidden/cell state.

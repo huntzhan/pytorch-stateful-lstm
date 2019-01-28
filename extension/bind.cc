@@ -50,7 +50,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
               int64_t, int64_t, int64_t,
               bool, int64_t,
               double, double,
-              int64_t, double>(),
+              int64_t, double,
+              bool>(),
           // Required.
           py::arg("num_layers"),
           py::arg("input_size"),
@@ -62,7 +63,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("cell_clip") = 0.0,
           py::arg("proj_clip") = 0.0,
           py::arg("recurrent_dropout_type") = 0,
-          py::arg("recurrent_dropout_probability") = 0.0)
+          py::arg("recurrent_dropout_probability") = 0.0,
+          py::arg("use_skip_connections") = false)
 
       .def(
           "__call__",
@@ -91,7 +93,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
               int64_t, int64_t, int64_t,
               bool, int64_t,
               double, double,
-              int64_t, double>(),
+              int64_t, double,
+              bool>(),
           // Required.
           py::arg("num_layers"),
           py::arg("input_size"),
@@ -103,7 +106,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("cell_clip") = 0.0,
           py::arg("proj_clip") = 0.0,
           py::arg("recurrent_dropout_type") = 0,
-          py::arg("recurrent_dropout_probability") = 0.0)
+          py::arg("recurrent_dropout_probability") = 0.0,
+          py::arg("use_skip_connections") = false)
 
       .def(
           "__call__",

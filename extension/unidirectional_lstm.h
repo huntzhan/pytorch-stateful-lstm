@@ -98,7 +98,9 @@ struct UnidirectionalLstm : torch::nn::Module {
       double cell_clip,
       double proj_clip,
       int64_t recurrent_dropout_type,
-      double recurrent_dropout_probability);
+      double recurrent_dropout_probability,
+
+      bool use_skip_connections);
 
   // Similar to `UnidirectionalSingleLayerLstm`, but with
   // the results of `num_layers` layers.
@@ -127,6 +129,8 @@ struct UnidirectionalLstm : torch::nn::Module {
   int64_t cell_size_ = -1;
 
   int64_t num_layers_ = -1;
+  bool use_skip_connections_ = false;
+
   std::string layer_name_prefix_ = "";
   std::vector<std::shared_ptr<UnidirectionalSingleLayerLstm>> layers_ = {};
 };
