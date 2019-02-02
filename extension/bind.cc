@@ -114,6 +114,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           &cnt::StatefulUnidirectionalLstm::forward)
 
       .def(
+          "permutate_states",
+          &cnt::StatefulUnidirectionalLstm::permutate_states)
+
+      .def(
           "reset_states",
           &cnt::StatefulUnidirectionalLstm::reset_states);
 }

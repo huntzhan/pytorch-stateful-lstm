@@ -351,7 +351,7 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
     torch::Tensor inputs,
     torch::Tensor batch_sizes) {
   int64_t batch_size = inputs.size(0);
-  auto options = torch::dtype(inputs.dtype()).device(inputs.device());
+  auto options = weight_options();
 
   auto hidden_state = torch::zeros({1, batch_size, hidden_size_}, options);
   auto cell_state = torch::zeros({1, batch_size, cell_size_}, options);
@@ -359,6 +359,11 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
       inputs,
       batch_sizes,
       std::make_tuple(hidden_state, cell_state));
+}
+
+torch::TensorOptions UnidirectionalSingleLayerLstm::weight_options() {
+  return torch::dtype(torch::kFloat32)
+      .device(hidden_linearity_weight_.device());
 }
 
 UnidirectionalLstm::UnidirectionalLstm(
@@ -379,6 +384,10 @@ UnidirectionalLstm::UnidirectionalLstm(
     num_layers_(num_layers),
     use_skip_connections_(use_skip_connections),
     layer_name_prefix_(go_forward ? "forward_layer_" : "backward_layer_") {
+  if (num_layers_ == 0) {
+    throw std::invalid_argument("num_layers should >= 1.");
+  }
+
   auto lstm_input_size = input_size;
 
   for (int64_t layer_idx = 0; layer_idx < num_layers_; layer_idx++) {
@@ -458,7 +467,7 @@ LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
     torch::Tensor batch_sizes) {
   auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
   int64_t batch_size = batch_sizes_accessor[0];
-  auto options = torch::dtype(inputs.dtype()).device(inputs.device());
+  auto options = weight_options();
 
   auto hidden_state = torch::zeros(
       {num_layers_, batch_size, hidden_size_},
@@ -470,6 +479,10 @@ LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
       inputs,
       batch_sizes,
       std::make_tuple(hidden_state, cell_state));
+}
+
+torch::TensorOptions UnidirectionalLstm::weight_options() {
+  return layers_[0]->weight_options();
 }
 
 }  // namespace cnt

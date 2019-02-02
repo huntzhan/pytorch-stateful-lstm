@@ -37,16 +37,14 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       uni_lstm_);
 }
 
-LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
-      torch::Tensor inputs,
-      torch::Tensor batch_sizes) {
-  auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
-  int64_t batch_size = batch_sizes_accessor[0];
-  auto options = torch::dtype(inputs.dtype()).device(inputs.device());
-
-  if (!(managed_hidden_state_.defined() && managed_cell_state_.defined())) {
+void StatefulUnidirectionalLstm::prepare_managed_states(int64_t batch_size) {
+  auto options = uni_lstm_->weight_options();
+  if (!managed_hidden_state_.defined()
+      || managed_hidden_state_.dtype() != options.dtype()
+      || !managed_cell_state_.defined()
+      || managed_cell_state_.dtype() != options.dtype()) {
     // Initialize with zero tensors
-    // if the managed state is not defined.
+    // if the managed state is not defined or device not match.
     managed_hidden_state_ = torch::zeros(
         {num_layers_, batch_size, hidden_size_},
         options);
@@ -73,6 +71,14 @@ LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
         {managed_cell_state_, cell_state_zeros},
         1);
   }
+}
+
+LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
+    torch::Tensor inputs,
+    torch::Tensor batch_sizes) {
+  auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
+  int64_t batch_size = batch_sizes_accessor[0];
+  prepare_managed_states(batch_size);
 
   auto lstm_out = uni_lstm_->forward(
       inputs,
@@ -88,6 +94,16 @@ LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
   managed_cell_state_ = cell_state.detach();
 
   return lstm_out;
+}
+
+void StatefulUnidirectionalLstm::permutate_states(torch::Tensor index) {
+  // index of shape `(batch_size,)`
+  int64_t batch_size = index.size(0);
+  prepare_managed_states(batch_size);
+
+  // permuate states.
+  managed_hidden_state_ = managed_hidden_state_.index_select(1, index);
+  managed_cell_state_ = managed_cell_state_.index_select(1, index);
 }
 
 void StatefulUnidirectionalLstm::reset_states() {

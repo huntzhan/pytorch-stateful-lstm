@@ -27,6 +27,12 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
       torch::Tensor inputs,
       torch::Tensor batch_sizes);
 
+  // Initialize managed states if necessary.
+  void prepare_managed_states(int64_t batch_size);
+
+  // Permutate hidden/cell state for ordered inputs.
+  void permutate_states(torch::Tensor index);
+
   // Reset hidden/cell state.
   void reset_states();
 

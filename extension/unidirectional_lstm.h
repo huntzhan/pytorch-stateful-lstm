@@ -65,6 +65,8 @@ struct UnidirectionalSingleLayerLstm : torch::nn::Module {
       torch::Tensor inputs,
       torch::Tensor batch_sizes);
 
+  torch::TensorOptions weight_options();
+
   int64_t input_size_ = -1;
   int64_t hidden_size_ = -1;
   int64_t cell_size_ = -1;
@@ -124,6 +126,8 @@ struct UnidirectionalLstm : torch::nn::Module {
   LstmForwardMultiLayerRetType forward(
       torch::Tensor inputs,
       torch::Tensor batch_sizes);
+
+  torch::TensorOptions weight_options();
 
   int64_t hidden_size_ = -1;
   int64_t cell_size_ = -1;
