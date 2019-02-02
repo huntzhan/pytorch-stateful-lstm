@@ -40,9 +40,9 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
 void StatefulUnidirectionalLstm::prepare_managed_states(int64_t batch_size) {
   auto options = uni_lstm_->weight_options();
   if (!managed_hidden_state_.defined()
-      || managed_hidden_state_.dtype() != options.dtype()
+      || managed_hidden_state_.device() != options.device()
       || !managed_cell_state_.defined()
-      || managed_cell_state_.dtype() != options.dtype()) {
+      || managed_cell_state_.device() != options.device()) {
     // Initialize with zero tensors
     // if the managed state is not defined or device not match.
     managed_hidden_state_ = torch::zeros(
