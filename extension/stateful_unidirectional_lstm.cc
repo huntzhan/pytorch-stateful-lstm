@@ -97,18 +97,49 @@ LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
 }
 
 void StatefulUnidirectionalLstm::permutate_states(torch::Tensor index) {
-  // index of shape `(batch_size,)`
+  // `index` of shape `(batch_size,)`
   int64_t batch_size = index.size(0);
   prepare_managed_states(batch_size);
 
-  // permuate states.
-  managed_hidden_state_ = managed_hidden_state_.index_select(1, index);
-  managed_cell_state_ = managed_cell_state_.index_select(1, index);
+  // Permuate states.
+  auto permuated_managed_hidden_state =
+      managed_hidden_state_.index_select(1, index);
+  if (batch_size < managed_hidden_state_.size(1)) {
+    permuated_managed_hidden_state = torch::cat(
+        {
+            permuated_managed_hidden_state,
+            managed_hidden_state_.narrow(
+                1, batch_size, managed_hidden_state_.size(1) - batch_size),
+        },
+        1);
+  }
+  managed_hidden_state_ = permuated_managed_hidden_state;
+
+  auto permuated_managed_cell_state =
+      managed_cell_state_.index_select(1, index);
+  if (batch_size < managed_cell_state_.size(1)) {
+    permuated_managed_cell_state = torch::cat(
+        {
+            permuated_managed_cell_state,
+            managed_cell_state_.narrow(
+                1, batch_size, managed_cell_state_.size(1) - batch_size),
+        },
+        1);
+  }
+  managed_cell_state_ = permuated_managed_cell_state;
 }
 
 void StatefulUnidirectionalLstm::reset_states() {
   managed_hidden_state_.reset();
   managed_cell_state_.reset();
+}
+
+torch::Tensor StatefulUnidirectionalLstm::managed_hidden_state() {
+  return managed_hidden_state_;
+}
+
+torch::Tensor StatefulUnidirectionalLstm::managed_cell_state() {
+  return managed_cell_state_;
 }
 
 }  // namespace cnt

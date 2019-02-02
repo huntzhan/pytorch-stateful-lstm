@@ -36,6 +36,10 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
   // Reset hidden/cell state.
   void reset_states();
 
+  // Accessor.
+  torch::Tensor managed_hidden_state();
+  torch::Tensor managed_cell_state();
+
   // For building the initial state.
   int64_t num_layers_ = -1;
   int64_t hidden_size_ = -1;

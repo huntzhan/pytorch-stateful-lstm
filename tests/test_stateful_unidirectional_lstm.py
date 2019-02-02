@@ -115,3 +115,34 @@ def test_stateful_unidirectional_lstm():
             lstm_state_1[1].data.numpy(),
             lstm_state_5[1].data.numpy(),
     )
+
+
+def test_permutate_states():
+    lstm = StatefulUnidirectionalLstm(
+            num_layers=2,
+            input_size=3,
+            hidden_size=5,
+            cell_size=7,
+    )
+
+    input_tensor = torch.rand(4, 5, 3)
+    inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
+    lstm(inputs.data, inputs.batch_sizes)
+    hidden_state_1 = lstm.managed_hidden_state()
+    assert list(hidden_state_1.shape) == [2, 4, 5]
+
+    lstm.permutate_states(torch.LongTensor([1, 0]))
+
+    hidden_state_2 = lstm.managed_hidden_state()
+    assert list(hidden_state_2.shape) == [2, 4, 5]
+
+    numpy.testing.assert_raises(
+            AssertionError,
+            numpy.testing.assert_array_equal,
+            hidden_state_1,
+            hidden_state_2,
+    )
+    numpy.testing.assert_array_equal(
+            hidden_state_1.narrow(1, 2, 2),
+            hidden_state_2.narrow(1, 2, 2),
+    )

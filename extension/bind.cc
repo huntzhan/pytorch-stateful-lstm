@@ -119,5 +119,13 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
       .def(
           "reset_states",
-          &cnt::StatefulUnidirectionalLstm::reset_states);
+          &cnt::StatefulUnidirectionalLstm::reset_states)
+
+      .def(
+          "managed_hidden_state",
+          &cnt::StatefulUnidirectionalLstm::managed_hidden_state)
+
+      .def(
+          "managed_cell_state",
+          &cnt::StatefulUnidirectionalLstm::managed_cell_state);
 }
