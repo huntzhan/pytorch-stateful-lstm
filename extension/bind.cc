@@ -24,6 +24,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("recurrent_dropout_probability") = 0.0)
 
       .def(
+          "cuda",
+          [](cnt::UnidirectionalSingleLayerLstm& module, int64_t device) {
+            module.to("cuda:" + std::to_string(device));
+          })
+
+      .def(
           "__call__",
           (
               cnt::LstmForwardRetType
@@ -67,6 +73,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("use_skip_connections") = false)
 
       .def(
+          "cuda",
+          [](cnt::UnidirectionalLstm& module, int64_t device) {
+            module.to("cuda:" + std::to_string(device));
+          })
+
+      .def(
           "__call__",
           (
               cnt::LstmForwardMultiLayerRetType
@@ -108,6 +120,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("recurrent_dropout_type") = 0,
           py::arg("recurrent_dropout_probability") = 0.0,
           py::arg("use_skip_connections") = false)
+
+      .def(
+          "cuda",
+          [](cnt::StatefulUnidirectionalLstm& module, int64_t device) {
+            module.to("cuda:" + std::to_string(device));
+          })
 
       .def(
           "__call__",
