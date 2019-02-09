@@ -4,7 +4,7 @@ wheel==0.32.3
 bumpversion==0.5.3
 
 # Doc.
-Sphinx==1.8.3
+Sphinx==1.8.4
 watchdog==0.9.0
 twine==1.12.1
 
@@ -13,7 +13,8 @@ tox==3.7.0
 yapf==0.25.0
 pylint==2.2.2
 mypy==0.660
-pytest==4.1.1
+flaky==3.5.3
+pytest==4.2.0
 pytest-runner==4.2
 coverage==4.5.2
 
@@ -27,4 +28,4 @@ allennlp==0.8.1
 
 # Resolve conflicts.
 pluggy==0.8.1
-numpy==1.16.0
+numpy==1.16.1
