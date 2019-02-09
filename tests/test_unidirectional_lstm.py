@@ -164,6 +164,9 @@ def test_unidirectional_single_layer_lstm_variational_dropout():
 
     inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
 
+    initial_hidden_state = torch.ones([1, 4, 50])
+    initial_cell_state = torch.ones([1, 4, 7])
+
     lstm = UnidirectionalSingleLayerLstm(
             input_size=3,
             hidden_size=50,
@@ -175,10 +178,12 @@ def test_unidirectional_single_layer_lstm_variational_dropout():
     output_sequence_1, lstm_state_1 = lstm(
             inputs.data,
             inputs.batch_sizes,
+            (initial_hidden_state, initial_cell_state),
     )
     output_sequence_2, lstm_state_2 = lstm(
             inputs.data,
             inputs.batch_sizes,
+            (initial_hidden_state, initial_cell_state),
     )
 
     numpy.testing.assert_raises(
@@ -209,6 +214,9 @@ def test_unidirectional_single_layer_lstm_dropconnect():
 
     inputs = pack_padded_sequence(input_tensor, [5, 4, 2, 1], batch_first=True)
 
+    initial_hidden_state = torch.ones([1, 4, 50])
+    initial_cell_state = torch.ones([1, 4, 7])
+
     lstm = UnidirectionalSingleLayerLstm(
             input_size=3,
             hidden_size=50,
@@ -220,10 +228,12 @@ def test_unidirectional_single_layer_lstm_dropconnect():
     output_sequence_1, lstm_state_1 = lstm(
             inputs.data,
             inputs.batch_sizes,
+            (initial_hidden_state, initial_cell_state),
     )
     output_sequence_2, lstm_state_2 = lstm(
             inputs.data,
             inputs.batch_sizes,
+            (initial_hidden_state, initial_cell_state),
     )
 
     numpy.testing.assert_raises(

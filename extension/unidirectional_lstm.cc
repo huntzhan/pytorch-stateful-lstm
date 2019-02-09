@@ -64,7 +64,7 @@ torch::Tensor get_dropout_mask(
   return dropout_mask;
 }
 
-UnidirectionalSingleLayerLstm::UnidirectionalSingleLayerLstm(
+UnidirectionalSingleLayerLstmImpl::UnidirectionalSingleLayerLstmImpl(
     int64_t input_size,
     int64_t hidden_size,
     int64_t cell_size,
@@ -128,7 +128,7 @@ UnidirectionalSingleLayerLstm::UnidirectionalSingleLayerLstm(
       {hidden_size_, cell_size_});
 }
 
-LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
+LstmForwardRetType UnidirectionalSingleLayerLstmImpl::forward(
     torch::Tensor inputs,
     torch::Tensor batch_sizes,
     LstmStateType initial_state) {
@@ -347,26 +347,12 @@ LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
           cell_state.unsqueeze(0)));
 }
 
-LstmForwardRetType UnidirectionalSingleLayerLstm::forward(
-    torch::Tensor inputs,
-    torch::Tensor batch_sizes) {
-  int64_t batch_size = inputs.size(0);
-  auto options = weight_options();
-
-  auto hidden_state = torch::zeros({1, batch_size, hidden_size_}, options);
-  auto cell_state = torch::zeros({1, batch_size, cell_size_}, options);
-  return forward(
-      inputs,
-      batch_sizes,
-      std::make_tuple(hidden_state, cell_state));
-}
-
-torch::TensorOptions UnidirectionalSingleLayerLstm::weight_options() {
+torch::TensorOptions UnidirectionalSingleLayerLstmImpl::weight_options() {
   return torch::dtype(torch::kFloat32)
       .device(hidden_linearity_weight_.device());
 }
 
-UnidirectionalLstm::UnidirectionalLstm(
+UnidirectionalLstmImpl::UnidirectionalLstmImpl(
     int64_t num_layers,
     int64_t input_size,
     int64_t hidden_size,
@@ -392,7 +378,7 @@ UnidirectionalLstm::UnidirectionalLstm(
 
   for (int64_t layer_idx = 0; layer_idx < num_layers_; layer_idx++) {
     // Construct.
-    auto layer_ptr = std::make_shared<UnidirectionalSingleLayerLstm>(
+    auto layer = UnidirectionalSingleLayerLstm(
         lstm_input_size,
         hidden_size,
         cell_size,
@@ -405,14 +391,14 @@ UnidirectionalLstm::UnidirectionalLstm(
     // Register.
     register_module(
         layer_name_prefix_ + std::to_string(layer_idx),
-        layer_ptr);
-    layers_.push_back(layer_ptr);
+        layer);
+    layers_.push_back(layer);
 
     lstm_input_size = hidden_size;
   }
 }
 
-LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
+LstmForwardMultiLayerRetType UnidirectionalLstmImpl::forward(
     torch::Tensor inputs,
     torch::Tensor batch_sizes,
     LstmStateType initial_state) {
@@ -431,7 +417,7 @@ LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
     auto layer_cell_state = layers_cell_state
         .select(0, layer_idx).unsqueeze(0);
 
-    auto layer_out = layers_[layer_idx]->forward(
+    auto layer_out = layers_[layer_idx](
         layer_inputs,
         batch_sizes,
         std::make_tuple(
@@ -462,26 +448,7 @@ LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
           torch::cat(cell_states, 0)));
 }
 
-LstmForwardMultiLayerRetType UnidirectionalLstm::forward(
-    torch::Tensor inputs,
-    torch::Tensor batch_sizes) {
-  auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
-  int64_t batch_size = batch_sizes_accessor[0];
-  auto options = weight_options();
-
-  auto hidden_state = torch::zeros(
-      {num_layers_, batch_size, hidden_size_},
-      options);
-  auto cell_state = torch::zeros(
-      {num_layers_, batch_size, cell_size_},
-      options);
-  return forward(
-      inputs,
-      batch_sizes,
-      std::make_tuple(hidden_state, cell_state));
-}
-
-torch::TensorOptions UnidirectionalLstm::weight_options() {
+torch::TensorOptions UnidirectionalLstmImpl::weight_options() {
   return layers_[0]->weight_options();
 }
 

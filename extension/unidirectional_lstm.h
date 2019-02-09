@@ -13,8 +13,8 @@ using LstmForwardRetType = std::tuple<torch::Tensor, LstmStateType>;
 using LstmForwardMultiLayerRetType = std::tuple<
     std::vector<torch::Tensor>, LstmStateType>;
 
-struct UnidirectionalSingleLayerLstm : torch::nn::Module {
-  UnidirectionalSingleLayerLstm(
+struct UnidirectionalSingleLayerLstmImpl : torch::nn::Module {
+  UnidirectionalSingleLayerLstmImpl(
       // Define the structure.
       int64_t input_size,
       int64_t hidden_size,
@@ -60,11 +60,6 @@ struct UnidirectionalSingleLayerLstm : torch::nn::Module {
       torch::Tensor batch_sizes,
       LstmStateType initial_state);
 
-  // Equivalent to passing zero tensors as the initial states.
-  LstmForwardRetType forward(
-      torch::Tensor inputs,
-      torch::Tensor batch_sizes);
-
   torch::TensorOptions weight_options();
 
   int64_t input_size_ = -1;
@@ -87,8 +82,10 @@ struct UnidirectionalSingleLayerLstm : torch::nn::Module {
   torch::Tensor proj_linearity_weight_{};
 };
 
-struct UnidirectionalLstm : torch::nn::Module {
-  UnidirectionalLstm(
+TORCH_MODULE(UnidirectionalSingleLayerLstm);
+
+struct UnidirectionalLstmImpl : torch::nn::Module {
+  UnidirectionalLstmImpl(
       int64_t num_layers,
 
       // See the constructor of `UnidirectionalSingleLayerLstm`.
@@ -122,11 +119,6 @@ struct UnidirectionalLstm : torch::nn::Module {
       torch::Tensor batch_sizes,
       LstmStateType initial_state);
 
-  // Equivalent to passing zero tensors as the initial states.
-  LstmForwardMultiLayerRetType forward(
-      torch::Tensor inputs,
-      torch::Tensor batch_sizes);
-
   torch::TensorOptions weight_options();
 
   int64_t hidden_size_ = -1;
@@ -136,8 +128,10 @@ struct UnidirectionalLstm : torch::nn::Module {
   bool use_skip_connections_ = false;
 
   std::string layer_name_prefix_ = "";
-  std::vector<std::shared_ptr<UnidirectionalSingleLayerLstm>> layers_ = {};
+  std::vector<UnidirectionalSingleLayerLstm> layers_ = {};
 };
+
+TORCH_MODULE(UnidirectionalLstm);
 
 }  // namespace cnt
 

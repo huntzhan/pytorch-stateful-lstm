@@ -6,9 +6,9 @@
 
 namespace cnt {
 
-struct StatefulUnidirectionalLstm : torch::nn::Module {
+struct StatefulUnidirectionalLstmImpl : torch::nn::Module {
   // See the constructor of `UnidirectionalLstm`.
-  StatefulUnidirectionalLstm(
+  StatefulUnidirectionalLstmImpl(
       int64_t num_layers,
       int64_t input_size,
       int64_t hidden_size,
@@ -50,8 +50,10 @@ struct StatefulUnidirectionalLstm : torch::nn::Module {
   // Of shape `(num_layers, max_batch, cell_size)`.
   torch::Tensor managed_cell_state_{};
 
-  std::shared_ptr<UnidirectionalLstm> uni_lstm_ = nullptr;
+  UnidirectionalLstm uni_lstm_ = nullptr;
 };
+
+TORCH_MODULE(StatefulUnidirectionalLstm);
 
 }  // namespace cnt
 

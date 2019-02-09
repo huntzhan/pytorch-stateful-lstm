@@ -2,7 +2,7 @@
 
 namespace cnt {
 
-StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
+StatefulUnidirectionalLstmImpl::StatefulUnidirectionalLstmImpl(
       int64_t num_layers,
       int64_t input_size,
       int64_t hidden_size,
@@ -19,7 +19,7 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       hidden_size_(hidden_size),
       cell_size_(cell_size) {
   // Construct `UnidirectionalLstm`.
-  uni_lstm_ = std::make_shared<UnidirectionalLstm>(
+  uni_lstm_ = UnidirectionalLstm(
       num_layers,
       input_size,
       hidden_size,
@@ -37,7 +37,8 @@ StatefulUnidirectionalLstm::StatefulUnidirectionalLstm(
       uni_lstm_);
 }
 
-void StatefulUnidirectionalLstm::prepare_managed_states(int64_t batch_size) {
+void StatefulUnidirectionalLstmImpl::prepare_managed_states(
+    int64_t batch_size) {
   auto options = uni_lstm_->weight_options();
   if (!managed_hidden_state_.defined()
       || managed_hidden_state_.device() != options.device()
@@ -73,14 +74,14 @@ void StatefulUnidirectionalLstm::prepare_managed_states(int64_t batch_size) {
   }
 }
 
-LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
+LstmForwardMultiLayerRetType StatefulUnidirectionalLstmImpl::forward(
     torch::Tensor inputs,
     torch::Tensor batch_sizes) {
   auto batch_sizes_accessor = batch_sizes.accessor<int64_t, 1>();
   int64_t batch_size = batch_sizes_accessor[0];
   prepare_managed_states(batch_size);
 
-  auto lstm_out = uni_lstm_->forward(
+  auto lstm_out = uni_lstm_(
       inputs,
       batch_sizes,
       std::make_tuple(managed_hidden_state_, managed_cell_state_));
@@ -96,7 +97,7 @@ LstmForwardMultiLayerRetType StatefulUnidirectionalLstm::forward(
   return lstm_out;
 }
 
-void StatefulUnidirectionalLstm::permutate_states(torch::Tensor index) {
+void StatefulUnidirectionalLstmImpl::permutate_states(torch::Tensor index) {
   // `index` of shape `(batch_size,)`
   int64_t batch_size = index.size(0);
   prepare_managed_states(batch_size);
@@ -129,16 +130,16 @@ void StatefulUnidirectionalLstm::permutate_states(torch::Tensor index) {
   managed_cell_state_ = permuated_managed_cell_state;
 }
 
-void StatefulUnidirectionalLstm::reset_states() {
+void StatefulUnidirectionalLstmImpl::reset_states() {
   managed_hidden_state_.reset();
   managed_cell_state_.reset();
 }
 
-torch::Tensor StatefulUnidirectionalLstm::managed_hidden_state() {
+torch::Tensor StatefulUnidirectionalLstmImpl::managed_hidden_state() {
   return managed_hidden_state_;
 }
 
-torch::Tensor StatefulUnidirectionalLstm::managed_cell_state() {
+torch::Tensor StatefulUnidirectionalLstmImpl::managed_cell_state() {
   return managed_cell_state_;
 }
 

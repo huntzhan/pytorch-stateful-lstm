@@ -2,7 +2,7 @@
 #include "extension/stateful_unidirectional_lstm.h"
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  torch::python::bind_module<cnt::UnidirectionalSingleLayerLstm>(
+  torch::python::bind_module<cnt::UnidirectionalSingleLayerLstmImpl>(
       m, "UnidirectionalSingleLayerLstm")
 
       .def(
@@ -25,29 +25,15 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
       .def(
           "cuda",
-          [](cnt::UnidirectionalSingleLayerLstm& module, int64_t device) {
+          [](cnt::UnidirectionalSingleLayerLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
           })
 
       .def(
           "__call__",
-          (
-              cnt::LstmForwardRetType
-              (cnt::UnidirectionalSingleLayerLstm::*)
-              (torch::Tensor, torch::Tensor, cnt::LstmStateType)
-          )
-              &cnt::UnidirectionalSingleLayerLstm::forward)
+          &cnt::UnidirectionalSingleLayerLstmImpl::forward);
 
-      .def(
-          "__call__",
-          (
-              cnt::LstmForwardRetType
-              (cnt::UnidirectionalSingleLayerLstm::*)
-              (torch::Tensor, torch::Tensor)
-          )
-              &cnt::UnidirectionalSingleLayerLstm::forward);
-
-  torch::python::bind_module<cnt::UnidirectionalLstm>(
+  torch::python::bind_module<cnt::UnidirectionalLstmImpl>(
       m, "UnidirectionalLstm")
 
       .def(
@@ -74,29 +60,15 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
       .def(
           "cuda",
-          [](cnt::UnidirectionalLstm& module, int64_t device) {
+          [](cnt::UnidirectionalLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
           })
 
       .def(
           "__call__",
-          (
-              cnt::LstmForwardMultiLayerRetType
-              (cnt::UnidirectionalLstm::*)
-              (torch::Tensor, torch::Tensor, cnt::LstmStateType)
-          )
-              &cnt::UnidirectionalLstm::forward)
+          &cnt::UnidirectionalLstmImpl::forward);
 
-      .def(
-          "__call__",
-          (
-              cnt::LstmForwardMultiLayerRetType
-              (cnt::UnidirectionalLstm::*)
-              (torch::Tensor, torch::Tensor)
-          )
-              &cnt::UnidirectionalLstm::forward);
-
-  torch::python::bind_module<cnt::StatefulUnidirectionalLstm>(
+  torch::python::bind_module<cnt::StatefulUnidirectionalLstmImpl>(
       m, "StatefulUnidirectionalLstm")
 
       .def(
@@ -123,27 +95,27 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
       .def(
           "cuda",
-          [](cnt::StatefulUnidirectionalLstm& module, int64_t device) {
+          [](cnt::StatefulUnidirectionalLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
           })
 
       .def(
           "__call__",
-          &cnt::StatefulUnidirectionalLstm::forward)
+          &cnt::StatefulUnidirectionalLstmImpl::forward)
 
       .def(
           "permutate_states",
-          &cnt::StatefulUnidirectionalLstm::permutate_states)
+          &cnt::StatefulUnidirectionalLstmImpl::permutate_states)
 
       .def(
           "reset_states",
-          &cnt::StatefulUnidirectionalLstm::reset_states)
+          &cnt::StatefulUnidirectionalLstmImpl::reset_states)
 
       .def(
           "managed_hidden_state",
-          &cnt::StatefulUnidirectionalLstm::managed_hidden_state)
+          &cnt::StatefulUnidirectionalLstmImpl::managed_hidden_state)
 
       .def(
           "managed_cell_state",
-          &cnt::StatefulUnidirectionalLstm::managed_cell_state);
+          &cnt::StatefulUnidirectionalLstmImpl::managed_cell_state);
 }
