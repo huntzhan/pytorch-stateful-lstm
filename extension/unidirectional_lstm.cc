@@ -5,8 +5,8 @@
 namespace cnt {
 
 void block_orthogonal_recursive(
-    const at::IntList sizes,
-    const at::IntList split_sizes,
+    const torch::IntArrayRef sizes,
+    const torch::IntArrayRef split_sizes,
     const double gain,
     const int64_t dim,
     torch::Tensor pre_narrowed_tensor) {
@@ -28,7 +28,7 @@ void block_orthogonal_recursive(
 
 void block_orthogonal(
     torch::Tensor tensor,
-    at::IntList split_sizes,
+    torch::IntArrayRef split_sizes,
     double gain = 1.0) {
   // Get the sizes of ``tensor``.
   auto sizes = tensor.sizes();
