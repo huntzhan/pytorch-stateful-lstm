@@ -4,9 +4,10 @@ python:
 - "3.6"
 install:
 - pip install -U pip
-- pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
 - pip install -U -r requirements_prod.txt --progress-bar off
 - pip install -U -r requirements_dev.txt --progress-bar off
+- pip uninstall -y torch
+- pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
 - python setup.py develop
 script:
 - py.test
