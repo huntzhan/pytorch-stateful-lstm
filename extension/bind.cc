@@ -27,11 +27,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           "cuda",
           [](cnt::UnidirectionalSingleLayerLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
-          })
-
-      .def(
-          "__call__",
-          &cnt::UnidirectionalSingleLayerLstmImpl::forward);
+          });
 
   torch::python::bind_module<cnt::UnidirectionalLstmImpl>(
       m, "UnidirectionalLstm")
@@ -62,11 +58,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           "cuda",
           [](cnt::UnidirectionalLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
-          })
-
-      .def(
-          "__call__",
-          &cnt::UnidirectionalLstmImpl::forward);
+          });
 
   torch::python::bind_module<cnt::StatefulUnidirectionalLstmImpl>(
       m, "StatefulUnidirectionalLstm")
@@ -98,10 +90,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           [](cnt::StatefulUnidirectionalLstmImpl& module, int64_t device) {
             module.to("cuda:" + std::to_string(device));
           })
-
-      .def(
-          "__call__",
-          &cnt::StatefulUnidirectionalLstmImpl::forward)
 
       .def(
           "permutate_states",
