@@ -1,9 +1,38 @@
 #include "extension/unidirectional_lstm.h"
 #include "extension/stateful_unidirectional_lstm.h"
 
+template <typename ModuleType, typename... Extra>
+py::class_<ModuleType, Extra...> patch_methods(
+    py::class_<ModuleType, Extra...> module) {
+  module.attr("cuda") = nullptr;
+  module.def(
+      "cuda",
+      [](ModuleType& module, int64_t device) {
+        module.to("cuda:" + std::to_string(device));
+        return module;
+      });
+  module.def(
+      "cuda",
+      [](ModuleType& module) {
+        module.to(at::kCUDA);
+        return module;
+      });
+
+  module.attr("cpu") = nullptr;
+  module.def(
+      "cpu",
+      [](ModuleType& module) {
+        module.to(at::kCPU);
+        return module;
+      });
+
+  return module;
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  torch::python::bind_module<cnt::UnidirectionalSingleLayerLstmImpl>(
-      m, "UnidirectionalSingleLayerLstm")
+  patch_methods(
+      torch::python::bind_module<cnt::UnidirectionalSingleLayerLstmImpl>(
+          m, "UnidirectionalSingleLayerLstm"))
 
       .def(
           py::init<
@@ -24,17 +53,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("recurrent_dropout_probability") = 0.0)
 
       .def(
-          "cuda",
-          [](cnt::UnidirectionalSingleLayerLstmImpl& module, int64_t device) {
-            module.to("cuda:" + std::to_string(device));
-          })
-
-      .def(
           "__call__",
           &cnt::UnidirectionalSingleLayerLstmImpl::forward);
 
-  torch::python::bind_module<cnt::UnidirectionalLstmImpl>(
-      m, "UnidirectionalLstm")
+  patch_methods(
+      torch::python::bind_module<cnt::UnidirectionalLstmImpl>(
+          m, "UnidirectionalLstm"))
 
       .def(
           py::init<
@@ -57,19 +81,14 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("recurrent_dropout_type") = 0,
           py::arg("recurrent_dropout_probability") = 0.0,
           py::arg("use_skip_connections") = false)
-
-      .def(
-          "cuda",
-          [](cnt::UnidirectionalLstmImpl& module, int64_t device) {
-            module.to("cuda:" + std::to_string(device));
-          })
 
       .def(
           "__call__",
           &cnt::UnidirectionalLstmImpl::forward);
 
-  torch::python::bind_module<cnt::StatefulUnidirectionalLstmImpl>(
-      m, "StatefulUnidirectionalLstm")
+  patch_methods(
+      torch::python::bind_module<cnt::StatefulUnidirectionalLstmImpl>(
+          m, "StatefulUnidirectionalLstm"))
 
       .def(
           py::init<
@@ -92,12 +111,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
           py::arg("recurrent_dropout_type") = 0,
           py::arg("recurrent_dropout_probability") = 0.0,
           py::arg("use_skip_connections") = false)
-
-      .def(
-          "cuda",
-          [](cnt::StatefulUnidirectionalLstmImpl& module, int64_t device) {
-            module.to("cuda:" + std::to_string(device));
-          })
 
       .def(
           "__call__",
