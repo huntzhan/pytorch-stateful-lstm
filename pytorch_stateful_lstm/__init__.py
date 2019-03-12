@@ -13,3 +13,7 @@ from _pytorch_stateful_lstm import (
         UnidirectionalLstm,
         StatefulUnidirectionalLstm,
 )
+from pytorch_stateful_lstm.unidirectional_lstm import (
+        PyUnidirectionalSingleLayerLstm,
+        PyUnidirectionalLstm,
+)
