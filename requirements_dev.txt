@@ -28,4 +28,4 @@ allennlp==0.8.1
 
 # Resolve conflicts.
 pluggy==0.8.1
-numpy==1.16.1
+numpy==1.22.0
